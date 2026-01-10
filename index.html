@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三国：前线 (Three Kingdoms: The Frontline)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 顶部：敌方区域 -->
+        <div id="opponent-area" class="player-area">
+            <div class="hand-container" id="opponent-hand">
+                <!-- 敌方手牌（背面） -->
+            </div>
+            <div class="stats-panel">
+                <div class="avatar">敌军 (魏)</div>
+                <div class="hq-health">HQ: <span id="opponent-hq">20</span></div>
+                <div class="kredits">令: <span id="opponent-kredits">1</span>/<span id="opponent-kredits-max">1</span></div>
+                <div class="deck-count">牌堆: <span id="opponent-deck-count">35</span></div>
+            </div>
+            <div class="support-line battlefield-row" id="opponent-support">
+                <!-- 敌方后排 -->
+            </div>
+        </div>
+
+        <!-- 中间：前线 -->
+        <div id="frontline-area" class="battlefield-row">
+            <div class="frontline-status">前线</div>
+            <div id="frontline" class="battlefield-slot">
+                <!-- 前线单位 -->
+            </div>
+        </div>
+
+        <!-- 底部：我方区域 -->
+        <div id="player-area" class="player-area">
+            <div class="support-line battlefield-row" id="player-support">
+                <!-- 我方后排 -->
+            </div>
+            <div class="stats-panel">
+                <div class="avatar">我军 (蜀)</div>
+                <div class="hq-health">HQ: <span id="player-hq">20</span></div>
+                <div class="kredits">令: <span id="player-kredits">1</span>/<span id="player-kredits-max">1</span></div>
+                <div class="deck-count">牌堆: <span id="player-deck-count">35</span></div>
+                <button id="end-turn-btn">结束回合</button>
+            </div>
+            <div class="hand-container" id="player-hand">
+                <!-- 我方手牌 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细信息/遮罩层 -->
+    <div id="log-container" style="position: fixed; left: 10px; top: 50%; transform: translateY(-50%); width: 200px; max-height: 300px; overflow-y: auto; color: rgba(255,255,255,0.5); font-size: 12px; pointer-events: none; z-index: 50;">
+        <!-- 日志记录 -->
+    </div>
+
+    <div id="modal-overlay" class="hidden">
+        <div id="game-message"></div>
+    </div>
+
+    <script src="cards.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
