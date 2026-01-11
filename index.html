@@ -2,20 +2,25 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KARDS: 三国演义</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>KARDS: 战火风云</title>
     <style>
         :root {
-            --bg-color: #2c241b;
+            --bg-color: #121212;
             --card-bg: #e0d6c5;
-            --card-border: #4a3b2a;
-            --wei-color: #2b4f81;
-            --shu-color: #8b3a3a;
-            --wu-color: #2f7a2d;
-            --qun-color: #5c5c5c; /* 群雄 */
-            --highlight: #d4af37;
-            --text-color: #f0e6d2;
+            --card-border: #1a1a1a;
+            
+            /* 阵营颜色 */
+            --germany-color: #263238; /* 德国灰 */
+            --japan-color: #b71c1c;   /* 日本红 */
+            --neutral-color: #5d4037; /* 群雄/中立 */
+            
+            --highlight: #ffd700;
+            --text-color: #e0e0e0;
             --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            --hero-border: #ffd700;
+            --soldier-border: #333;
         }
 
         * {
@@ -36,138 +41,105 @@
             width: 100vw;
         }
 
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-            background-color: #2c241b;
-            background-image: 
-                repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 10px),
-                radial-gradient(circle at center, #4d3e2e 0%, #1a1510 100%);
-            background-blend-mode: overlay;
-        }
-
-        /* === 区域布局 === */
-        .player-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            min-height: 0;
-        }
-
-        .opponent-area {
-            flex: 0 0 auto;
-            padding-bottom: 5px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
-        }
-
-        .battlefield {
-            flex: 2;
-            display: flex;
+        /* 强制横屏提示 */
+        #orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
             flex-direction: column;
             justify-content: center;
-            padding: 5px 0;
-            overflow-y: auto; /* 防止小屏溢出 */
-        }
-
-        .battlefield-row {
-            flex: 1;
-            display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 6px;
-            padding: 5px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            min-height: 110px;
-        }
-
-        #frontline-area {
-            background-color: rgba(60, 40, 20, 0.4);
-            border-top: 2px solid var(--highlight);
-            border-bottom: 2px solid var(--highlight);
-            position: relative;
-            flex: 1.2; /* 前线稍微大一点 */
-        }
-
-        .frontline-label {
-            position: absolute;
-            left: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.2);
-            writing-mode: vertical-rl;
-            pointer-events: none;
-            font-weight: bold;
-        }
-
-        /* === 手牌 === */
-        .hand-container {
-            flex: 0 0 130px; /* 固定高度 */
-            display: flex;
-            align-items: center;
-            padding: 5px 10px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            width: 100%;
-            -webkit-overflow-scrolling: touch;
-            background: rgba(0,0,0,0.2);
-            z-index: 10;
+            text-align: center;
+            color: #fff;
         }
         
-        #player-hand {
-            display: flex;
-            align-items: center;
-            padding-right: 20px;
-            margin: 0 auto; /* 居中 */
+        @media screen and (orientation: portrait) {
+            #orientation-warning { display: flex; }
         }
 
-        #opponent-hand {
-            justify-content: center;
-            height: 50px;
-            overflow: hidden;
-            flex: 0 0 auto;
-            padding: 0;
-            background: none;
+        #game-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9"100%" filter="url(%23noise)"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 1 0"/></filter><rect width="100%" height="100%" fill="transparent"/></svg>'), radial-gradient(circle at center, #2c2c2c 0%, #000 100%);
         }
 
-        /* === 信息面板 === */
-        .stats-panel {
+        /* === 左侧边栏 (HQ & Info) === */
+        #sidebar {
+            flex: 0 0 240px;
+            background: rgba(0,0,0,0.6);
+            border-right: 1px solid #333;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            padding: 5px 15px;
-            height: 40px;
+            padding: 15px;
+            z-index: 20;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
         }
 
-        .hq-info {
+        .hq-box {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hq-box.opponent-hq { border-top: 4px solid var(--germany-color); }
+        .hq-box.player-hq { border-bottom: 4px solid var(--japan-color); }
+
+        .hq-avatar {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: #333;
+            margin: 0 auto 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: bold;
+            justify-content: center;
+            font-size: 30px;
+            border: 3px solid #555;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
 
         .hq-hp {
-            font-size: 1.4em;
-            color: #ff6b6b;
-            text-shadow: 0 0 5px #ff0000;
+            font-size: 2.5em;
+            color: #d32f2f;
+            font-weight: bold;
+            text-shadow: 0 0 5px #000;
+            margin: 5px 0;
         }
-
+        
         .hq-name {
             font-size: 1.1em;
-            color: #fff;
+            font-weight: bold;
+            color: #ccc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .controls-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
         }
 
         .kredits-display {
-            font-size: 1.2em;
+            font-size: 1.8em;
             color: var(--highlight);
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 20px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            font-family: 'Courier New', monospace;
         }
         
         .kredit-dot {
@@ -176,375 +148,506 @@
             border-radius: 50%;
             box-shadow: 0 0 5px var(--highlight);
         }
+        
+        .deck-info {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
 
-        /* === 卡牌 === */
-        .card {
-            width: 85px;
-            height: 115px;
-            background-color: var(--card-bg);
-            border: 2px solid var(--card-border);
-            border-radius: 5px;
-            position: relative;
+        #end-turn-btn {
+            background: linear-gradient(to bottom, #d4af37, #b59020);
+            color: #1a1a1a;
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8a6d15;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.1s;
+        }
+        #end-turn-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        #end-turn-btn:disabled {
+            background: #444;
+            color: #888;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* === 右侧主区域 === */
+        #main-area {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            transition: transform 0.2s;
-            cursor: pointer;
-            flex-shrink: 0;
-            margin-right: -10px; /* 默认叠放 */
-        }
-        
-        .hand-container .card {
-             margin-right: -25px; /* 手牌叠放更紧密 */
-        }
-        
-        .hand-container .card:last-child {
-            margin-right: 0;
+            position: relative;
         }
 
-        .hand-container .card.selected {
-            transform: translateY(-20px) scale(1.1);
-            z-index: 100;
-            box-shadow: 0 0 15px var(--highlight);
-            margin-right: 5px;
-            margin-left: 5px;
+        /* 敌方手牌 */
+        #opponent-hand-area {
+            flex: 0 0 100px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 10px;
         }
         
-        /* 战场单位卡牌调整 */
-        .unit-card {
-            width: 75px;
-            height: 100px;
-            margin: 0 2px;
-            transform: scale(1);
-        }
-        
-        .unit-card.selected {
-            border-color: #00ff00;
-            box-shadow: 0 0 10px #00ff00;
-            transform: scale(1.05);
-            z-index: 50;
-        }
-        
-        .unit-card.exhausted {
-            filter: grayscale(0.8) brightness(0.8);
-        }
-        
-        .unit-card.ready {
-            box-shadow: 0 0 8px 1px #ffd700;
+        /* 战场 */
+        #battlefield {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px 60px;
+            perspective: 1200px;
         }
 
-        /* 卡牌内容 */
-        .card-cost {
-            position: absolute;
-            top: -6px; left: -6px;
-            width: 22px; height: 22px;
-            background: var(--highlight);
-            color: #000;
-            border-radius: 50%;
+        .row {
+            height: 150px;
+            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 15px;
+            transition: background 0.3s;
+            position: relative;
+        }
+        
+        .row-label {
+            position: absolute;
+            left: -50px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            color: rgba(255,255,255,0.2);
             font-weight: bold;
-            border: 2px solid var(--card-border);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+        
+        #frontline {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid rgba(212, 175, 55, 0.2);
+        }
+        #frontline::after {
+            content: "FRONTLINE";
+            position: absolute;
+            font-size: 40px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.03);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 玩家手牌 */
+        #player-hand-area {
+            flex: 0 0 180px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            z-index: 10;
+        }
+
+        /* === 卡牌样式 === */
+        .card {
+            width: 120px;
+            height: 168px; /* 5:7 ratio */
+            background-color: var(--card-bg);
+            border: 2px solid var(--soldier-border);
+            border-radius: 6px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            flex-shrink: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+        
+        .card.rarity-hero {
+            border: 3px solid var(--hero-border);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        /* 德国风格 */
+        .card.germany { background-color: #cfd8dc; border-color: var(--germany-color); }
+        .card.germany.rarity-hero { border-color: var(--hero-border); }
+        .card.germany .card-header { background: var(--germany-color); color: #fff; }
+        
+        /* 日本风格 */
+        .card.japan { background-color: #ffcdd2; border-color: var(--japan-color); }
+        .card.japan.rarity-hero { border-color: var(--hero-border); }
+        .card.japan .card-header { background: var(--japan-color); color: #fff; }
+        
+        /* 中立/群雄风格 */
+        .card.neutral { background-color: #d7ccc8; border-color: var(--neutral-color); }
+        .card.neutral.rarity-hero { border-color: var(--hero-border); }
+        .card.neutral .card-header { background: var(--neutral-color); color: #fff; }
+
+        /* 手牌叠放 */
+        #player-hand-area .card {
+            margin-right: -50px;
+            transform-origin: bottom center;
+        }
+        #player-hand-area .card:last-child { margin-right: 0; }
+        #player-hand-area .card:hover {
+            transform: translateY(-40px) scale(1.1) rotate(0deg) !important;
+            z-index: 100;
+            margin-right: 20px;
+            margin-left: 20px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.8);
+        }
+        #player-hand-area .card.selected {
+            transform: translateY(-50px) scale(1.15) !important;
+            box-shadow: 0 0 20px var(--highlight);
+            z-index: 101;
+            border-color: var(--highlight);
+        }
+
+        /* 战场单位 - 简化版卡牌 */
+        .unit-card {
+            width: 100px;
+            height: 130px;
+            font-size: 0.9em;
+        }
+        .unit-card.exhausted { filter: grayscale(0.8) brightness(0.6); }
+        .unit-card.ready { box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5); }
+        
+        .card-cost {
+            position: absolute;
+            top: 4px; left: 4px;
+            width: 24px; height: 24px;
+            background: #fff;
+            color: #000;
+            border-radius: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            border: 1px solid #000;
             z-index: 5;
             font-size: 14px;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         .card-img {
-            height: 50%;
+            flex: 1;
             background: #555;
-            margin: 2px;
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #fff;
-            font-size: 24px;
-            text-shadow: 1px 1px 2px #000;
+            font-size: 40px;
             overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.2);
+            border-bottom: 2px solid rgba(0,0,0,0.2);
+            position: relative;
         }
-
-        .card-title {
-            font-size: 10px;
+        
+        .card-header {
+            font-size: 11px;
             text-align: center;
             font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            padding: 1px 0;
+            padding: 4px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .card-desc {
+        .card-body {
+            padding: 5px;
+            height: 50px;
+            background: rgba(255,255,255,0.5);
+            color: #000;
+            font-size: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .card-type-tag {
             font-size: 8px;
-            padding: 2px;
-            line-height: 1.1;
-            flex: 1;
-            overflow: hidden;
-            background: rgba(255,255,255,0.4);
-            margin: 0 2px 2px;
-            border-radius: 2px;
-            color: #222;
+            color: #555;
+            margin-bottom: 2px;
+            text-transform: uppercase;
         }
 
         .card-stats {
             display: flex;
             justify-content: space-between;
-            padding: 2px 6px;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.85);
+            color: #fff;
             font-weight: bold;
-            background: rgba(0,0,0,0.1);
-            font-size: 12px;
+            font-size: 16px;
+            border-top: 1px solid rgba(255,255,255,0.2);
         }
-        .stat-atk { color: #b33; }
-        .stat-def { color: #22a; }
-
-        /* 势力样式 */
-        .card.shu { border-color: var(--shu-color); }
-        .card.shu .card-title { color: var(--shu-color); }
-        .card.wei { border-color: var(--wei-color); }
-        .card.wei .card-title { color: var(--wei-color); }
-        .card.wu { border-color: var(--wu-color); }
-        .card.wu .card-title { color: var(--wu-color); }
-        .card.qun { border-color: var(--qun-color); }
-        .card.qun .card-title { color: var(--qun-color); }
+        .stat-atk { color: #ffb74d; text-shadow: 1px 1px 0 #000; }
+        .stat-def { color: #64b5f6; text-shadow: 1px 1px 0 #000; }
 
         /* 特效图标 */
         .traits-row {
             position: absolute;
-            bottom: 20px;
-            width: 100%;
+            top: 30px; right: 4px;
             display: flex;
-            justify-content: center;
-            gap: 2px;
+            flex-direction: column;
+            gap: 4px;
             pointer-events: none;
         }
         .trait-icon {
-            width: 14px; height: 14px;
+            width: 22px; height: 22px;
             border-radius: 50%;
-            border: 1px solid #000;
+            border: 2px solid #fff;
             color: #fff;
-            font-size: 9px;
+            font-size: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            text-transform: uppercase;
         }
-        .t-blitz { background: #ffd700; color: #000; } /* 闪 */
-        .t-guard { background: #888; } /* 守 */
-        .t-heavy { background: #4682b4; } /* 甲 */
-        .t-ambush { background: #800080; } /* 伏 */
+        .t-blitz { background: #ff8f00; content: "B"; }
+        .t-guard { background: #546e7a; content: "G"; }
+        .t-heavy { background: #0277bd; content: "A"; }
+        .t-ambush { background: #7b1fa2; content: "H"; }
+        .t-smoke { background: #757575; content: "S"; }
+        .t-flight { background: #0288d1; content: "F"; }
 
-        /* === 按钮与控件 === */
-        #end-turn-btn {
-            background: var(--highlight);
-            color: #2c241b;
-            border: 2px solid #b59020;
-            padding: 8px 20px;
+        /* 弹窗与帮助 */
+        #help-btn {
+            position: fixed;
+            top: 15px; right: 15px;
+            width: 30px; height: 30px;
+            background: #333;
+            color: #ccc;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
             font-weight: bold;
-            border-radius: 20px;
-            font-size: 14px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            transition: all 0.2s;
+            cursor: pointer;
+            z-index: 1000;
+            border: 1px solid #666;
+            opacity: 0.5;
+            transition: opacity 0.3s;
         }
-        #end-turn-btn:disabled {
-            background: #666;
-            border-color: #444;
-            opacity: 0.7;
+        #help-btn:hover { opacity: 1; }
+
+        /* 消息提示 */
+        #msg-overlay {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            color: #fff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2000;
+            border: 2px solid var(--highlight);
+            text-align: center;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 900px) {
+            #sidebar { flex: 0 0 160px; padding: 10px; }
+            .hq-avatar { width: 50px; height: 50px; font-size: 24px; }
+            .hq-hp { font-size: 1.8em; }
+            .row { height: 110px; }
+            .card { width: 85px; height: 119px; }
+            .unit-card { width: 80px; height: 110px; }
+            #player-hand-area { height: 130px; }
+            .card-body { font-size: 8px; height: 40px; padding: 2px; }
+            .card-header { font-size: 9px; }
+            .card-stats { font-size: 12px; padding: 3px 6px; }
+            .kredits-display { font-size: 1.2em; padding: 5px 10px; }
+            #end-turn-btn { padding: 10px 0; font-size: 14px; }
         }
         
-        .control-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 15px;
-            background: rgba(0,0,0,0.5);
-        }
-
-        #help-btn {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.5);
-            color: #fff;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            position: absolute;
-            top: 10px; right: 10px;
-            z-index: 500;
-        }
-
-        /* === 弹窗 === */
         .modal {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 2000;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 3000;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
         }
+        .modal.hidden { display: none; }
         .modal-content {
-            background: #e0d6c5;
-            color: #2c241b;
-            padding: 20px;
-            border-radius: 10px;
-            border: 4px solid var(--highlight);
-            max-width: 500px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: #222;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            color: #ddd;
+            border: 1px solid #555;
             position: relative;
         }
         .modal-close {
             position: absolute;
             top: 10px; right: 10px;
             font-size: 24px;
-            font-weight: bold;
             cursor: pointer;
         }
-        .hidden { display: none !important; }
-
-        /* 动画消息 */
-        #msg-overlay {
-            position: fixed;
-            top: 40%; left: 0; width: 100%;
-            text-align: center;
-            pointer-events: none;
-            z-index: 3000;
-            text-shadow: 0 0 10px #000;
-            font-size: 32px;
-            font-weight: bold;
-            color: var(--highlight);
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
+        h2, h3 { color: var(--highlight); border-bottom: 1px solid #444; padding-bottom: 10px; }
         
-        /* 竖屏优化 */
-        @media (max-width: 600px) {
-            .card { width: 70px; height: 95px; }
-            .unit-card { width: 65px; height: 90px; }
-            .battlefield-row { min-height: 100px; }
-            .hand-container { height: 110px; }
-            .hq-hp { font-size: 1.2em; }
-            .card-cost { width: 18px; height: 18px; font-size: 12px; }
-            .card-title { font-size: 9px; }
-            .card-desc { font-size: 7px; }
-            .trait-icon { width: 12px; height: 12px; font-size: 8px; }
-        }
     </style>
 </head>
 <body>
 
+<div id="orientation-warning">
+    <div style="font-size: 40px; margin-bottom: 20px;">📱↔️</div>
+    <p>请旋转设备至横屏模式以获得最佳体验</p>
+</div>
+
 <div id="game-container">
-    <!-- 帮助按钮 -->
     <div id="help-btn" onclick="showHelp()">?</div>
-    
-    <!-- 敌方区域 -->
-    <div class="opponent-area">
-        <div class="stats-panel">
-            <div class="hq-info">
-                <span style="color:var(--wei-color)">魏</span>
-                <span id="opp-hp" class="hq-hp">20</span>
-            </div>
+
+    <!-- 左侧栏 -->
+    <div id="sidebar">
+        <!-- 敌方HQ -->
+        <div class="hq-box opponent-hq">
+            <div class="hq-avatar" style="border-color:var(--germany-color)">🇩🇪</div>
+            <div class="hq-name">德国 (GER)</div>
+            <div class="hq-hp" id="opp-hp">20</div>
+            <div class="deck-info">DECK: <span id="opp-deck-count">0</span></div>
             <div class="kredits-display">
                 <div class="kredit-dot"></div>
                 <span id="opp-kredits">1</span>/<span id="opp-kredits-max">12</span>
             </div>
         </div>
-        <div class="hand-container" id="opponent-hand">
-            <!-- 敌方手牌背面 -->
-        </div>
-    </div>
 
-    <!-- 战场区域 -->
-    <div class="battlefield">
-        <!-- 敌方后排 -->
-        <div class="battlefield-row" id="opp-support"></div>
-        
-        <!-- 前线 -->
-        <div class="battlefield-row" id="frontline-area">
-            <div class="frontline-label">前线</div>
-            <div id="frontline-units" style="display:flex;gap:4px;"></div>
-        </div>
-        
-        <!-- 我方后排 -->
-        <div class="battlefield-row" id="player-support"></div>
-    </div>
-
-    <!-- 我方区域 -->
-    <div class="player-area">
-        <div class="control-bar">
-            <div class="kredits-display">
+        <!-- 中控 -->
+        <div class="controls-area">
+            <div style="flex:1"></div>
+            <button id="end-turn-btn" onclick="endTurn()">结束回合</button>
+            <div class="kredits-display" style="background:#000">
                 <div class="kredit-dot"></div>
                 <span id="player-kredits">1</span>/<span id="player-kredits-max">12</span>
             </div>
-            <button id="end-turn-btn" onclick="endTurn()">结束回合</button>
-        </div>
-        
-        <div class="stats-panel" style="padding-top:0; height:30px;">
-            <div class="hq-info">
-                <span style="color:var(--shu-color)">蜀</span>
-                <span id="player-hp" class="hq-hp">20</span>
-            </div>
-            <div style="font-size:12px;color:#aaa">牌库: <span id="player-deck-count">0</span></div>
+            <div style="flex:1"></div>
         </div>
 
-        <div class="hand-container">
-            <div id="player-hand"></div>
+        <!-- 我方HQ -->
+        <div class="hq-box player-hq">
+            <div class="hq-avatar" style="border-color:var(--japan-color)">🇯🇵</div>
+            <div class="hq-name">日本 (JPN)</div>
+            <div class="hq-hp" id="player-hp">20</div>
+            <div class="deck-info">DECK: <span id="player-deck-count">0</span></div>
+        </div>
+    </div>
+
+    <!-- 主区域 -->
+    <div id="main-area">
+        <!-- 敌方手牌 -->
+        <div id="opponent-hand-area">
+            <!-- JS 填充 -->
+        </div>
+
+        <!-- 战场 -->
+        <div id="battlefield">
+            <div id="opp-support" class="row">
+                <div class="row-label">SUPPORT</div>
+            </div>
+            <div id="frontline" class="row">
+                <div class="row-label">FRONTLINE</div>
+            </div>
+            <div id="player-support" class="row">
+                <div class="row-label">SUPPORT</div>
+            </div>
+        </div>
+
+        <!-- 玩家手牌 -->
+        <div id="player-hand-area">
+            <!-- JS 填充 -->
         </div>
     </div>
 </div>
 
-<!-- 弹窗 -->
 <div id="help-modal" class="modal hidden">
     <div class="modal-content">
         <div class="modal-close" onclick="hideHelp()">&times;</div>
-        <h2>军争篇 (规则)</h2>
+        <h2>KARDS: 战火风云</h2>
         <p><strong>胜利条件：</strong> 摧毁敌方大本营 (HQ)。</p>
-        <p><strong>资源 (令)：</strong> 每回合恢复并增加上限(最大12)。部署、移动、攻击均需消耗令。</p>
-        <p><strong>前线 (Frontline)：</strong> 战场中央。只有占据前线，才能攻击敌方 HQ (除非使用轰炸/指令)。</p>
+        <p><strong>前线机制：</strong> 只有占据中间的前线，普通单位才能攻击敌方HQ。</p>
         <hr>
-        <h3>兵法 (关键词)</h3>
-        <p><span class="trait-icon t-blitz" style="display:inline-flex">闪</span> <strong>闪击</strong>：部署当回合即可移动或攻击。</p>
-        <p><span class="trait-icon t-guard" style="display:inline-flex">守</span> <strong>守护</strong>：敌人必须优先攻击守护单位。</p>
-        <p><span class="trait-icon t-heavy" style="display:inline-flex">甲</span> <strong>重甲</strong>：受到的伤害 -1。</p>
-        <p><span class="trait-icon t-ambush" style="display:inline-flex">伏</span> <strong>伏击</strong>：部署后无法被选中攻击，直到发动攻击。</p>
+        <h3>势力特色</h3>
+        <p><strong style="color:var(--japan-color)">日本 (JPN)</strong>: <strong>速攻、毁灭、玉碎</strong>。利用低费单位快速抢血，或通过自毁造成巨额伤害。</p>
+        <p><strong style="color:var(--germany-color)">德国 (GER)</strong>: <strong>闪击、重甲、控制</strong>。利用高质量坦克控制战场，配合战术指令打击敌人。</p>
+        <hr>
+        <h3>卡牌等级</h3>
+        <p><strong>英雄卡 (金边)</strong>: 传奇单位或指令，卡组限带1张。</p>
+        <p><strong>士兵卡</strong>: 普通作战单位。</p>
     </div>
 </div>
 
 <div id="msg-overlay"></div>
 
 <script>
-// === 1. 卡牌数据库 ===
+// === 1. 卡牌数据库 (WWII Theme) ===
 const CARDS = [
-    // --- 蜀 (Shu) ---
-    { id: 'shu_1', name: '蜀汉步兵', nation: 'shu', type: 'unit', cost: 1, op: 1, atk: 1, def: 2, traits: [], img: '步' },
-    { id: 'shu_2', name: '连弩兵', nation: 'shu', type: 'unit', cost: 2, op: 1, atk: 2, def: 1, traits: ['blitz'], text: '闪击', img: '弩' },
-    { id: 'shu_3', name: '白毦兵', nation: 'shu', type: 'unit', cost: 3, op: 1, atk: 2, def: 4, traits: ['guard'], text: '守护', img: '盾' },
-    { id: 'shu_4', name: '赵云', nation: 'shu', type: 'unit', cost: 6, op: 1, atk: 5, def: 6, traits: ['heavy_armor', 'blitz'], text: '重甲1, 闪击', img: '云' },
-    { id: 'shu_5', name: '桃园结义', nation: 'shu', type: 'order', cost: 3, effect: 'draw_2', text: '抽2张牌', img: '义' },
-    { id: 'shu_6', name: '关羽', nation: 'shu', type: 'unit', cost: 5, op: 1, atk: 5, def: 5, traits: [], text: '部署时：若你控制前线，造成2点伤害', onDeploy: 'dmg_2_random', img: '关' },
+    // --- 日本 (Japan) - Aggro/Destruction ---
+    // 英雄卡
+    { id: 'jp_hero_1', name: '山本五十六', nation: 'japan', rarity: 'hero', type: 'unit', cost: 6, op: 1, atk: 5, def: 5, traits: [], text: '部署：所有友军获得+1攻击力', onDeploy: 'buff_all_1_atk', img: '⚓' },
+    { id: 'jp_hero_2', name: '山下奉文', nation: 'japan', rarity: 'hero', type: 'unit', cost: 5, op: 1, atk: 6, def: 4, traits: ['ambush'], text: '伏击, 部署：消灭一个受损单位', onDeploy: 'kill_damaged', img: '🐯' },
     
-    // --- 魏 (Wei) ---
-    { id: 'wei_1', name: '青州兵', nation: 'wei', type: 'unit', cost: 1, op: 1, atk: 2, def: 1, traits: [], img: '青' },
-    { id: 'wei_2', name: '虎豹骑', nation: 'wei', type: 'unit', cost: 3, op: 1, atk: 3, def: 3, traits: ['blitz'], text: '闪击', img: '骑' },
-    { id: 'wei_3', name: '重装铁骑', nation: 'wei', type: 'unit', cost: 5, op: 2, atk: 6, def: 6, traits: ['heavy_armor'], text: '重甲1, 移动需2令', img: '铁' },
-    { id: 'wei_4', name: '急袭', nation: 'wei', type: 'order', cost: 2, effect: 'dmg_3', text: '造成3点伤害', img: '袭' },
-    { id: 'wei_5', name: '张辽', nation: 'wei', type: 'unit', cost: 4, op: 1, atk: 4, def: 4, traits: ['blitz', 'guard'], text: '闪击, 守护', img: '辽' },
+    // 士兵卡
+    { id: 'jp_1', name: '关东军步兵', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 1, op: 1, atk: 2, def: 1, traits: [], text: '亡语：对敌方HQ造成1点伤害', img: '💂' },
+    { id: 'jp_2', name: '九五式坦克', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 2, op: 1, atk: 3, def: 1, traits: ['blitz'], text: '闪击', img: '🚜' },
+    { id: 'jp_3', name: '零式战机', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 3, op: 1, atk: 4, def: 2, traits: ['blitz', 'flight'], text: '闪击, 飞行', img: '✈️' },
+    { id: 'jp_4', name: '敢死队', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 1, op: 0, atk: 4, def: 1, traits: [], text: '回合结束时自毁', onEndTurn: 'self_destruct', img: '💣' },
+    { id: 'jp_5', name: '万岁冲锋', nation: 'japan', rarity: 'soldier', type: 'order', cost: 2, effect: 'buff_all_2_0_temp', text: '本回合所有友军+2攻击', img: '🚩' },
+    { id: 'jp_6', name: '帝国命令', nation: 'japan', rarity: 'soldier', type: 'order', cost: 1, effect: 'dmg_2_hq', text: '对敌方HQ造成2点伤害', img: '📜' },
+    { id: 'jp_7', name: '大和魂', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 4, op: 1, atk: 3, def: 4, traits: ['guard'], text: '守护', img: '🛡️' },
+    { id: 'jp_8', name: '仙台联队', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 2, op: 1, atk: 2, def: 3, traits: [], text: '部署：抽1张牌', onDeploy: 'draw_1', img: '🌲' },
+    { id: 'jp_9', name: '玉碎', nation: 'japan', rarity: 'soldier', type: 'order', cost: 3, effect: 'kill_unit_dmg_hq', text: '消灭一个友军，对敌方HQ造成5点伤害', img: '💥' },
+    { id: 'jp_10', name: '扩张', nation: 'japan', rarity: 'soldier', type: 'order', cost: 2, effect: 'ramp_1', text: '增加1点令上限', img: '📈' },
+    { id: 'jp_11', name: '一式陆攻', nation: 'japan', rarity: 'soldier', type: 'unit', cost: 4, op: 2, atk: 5, def: 3, traits: ['flight'], text: '飞行', img: '🛩️' },
 
-    // --- 吴 (Wu) - 中立 ---
-    { id: 'wu_1', name: '丹阳兵', nation: 'wu', type: 'unit', cost: 1, op: 1, atk: 1, def: 3, traits: [], text: '坚韧', img: '丹' },
-    { id: 'wu_2', name: '锦帆贼', nation: 'wu', type: 'unit', cost: 3, op: 1, atk: 4, def: 2, traits: ['ambush'], text: '伏击', img: '贼' },
-    { id: 'wu_3', name: '周瑜', nation: 'wu', type: 'unit', cost: 5, op: 1, atk: 3, def: 4, traits: [], text: '部署：对所有敌军造成1点伤害', onDeploy: 'aoe_1', img: '瑜' },
-    { id: 'wu_4', name: '火攻', nation: 'wu', type: 'order', cost: 2, effect: 'dmg_2_draw_1', text: '造成2点伤害并抽1张牌', img: '火' },
+    // --- 德国 (Germany) - Tank/Control ---
+    // 英雄卡
+    { id: 'de_hero_1', name: '埃尔温·隆美尔', nation: 'germany', rarity: 'hero', type: 'unit', cost: 7, op: 1, atk: 5, def: 7, traits: ['heavy_armor', 'blitz'], text: '重甲1, 闪击, 部署：前线所有单位+2攻击', onDeploy: 'buff_front_2', img: '🦊' },
+    { id: 'de_hero_2', name: '海因茨·古德里安', nation: 'germany', rarity: 'hero', type: 'unit', cost: 6, op: 1, atk: 4, def: 6, traits: ['blitz'], text: '闪击, 部署：使一个装甲单位获得重甲', onDeploy: 'buff_armor_1', img: '⚡' },
 
-    // --- 群雄 (Qun) - 中立 ---
-    { id: 'qun_1', name: '西凉铁骑', nation: 'qun', type: 'unit', cost: 2, op: 1, atk: 3, def: 1, traits: ['blitz'], text: '闪击', img: '凉' },
-    { id: 'qun_2', name: '吕布', nation: 'qun', type: 'unit', cost: 8, op: 1, atk: 8, def: 8, traits: ['heavy_armor', 'blitz'], text: '重甲1, 闪击', img: '吕' },
-    { id: 'qun_3', name: '貂蝉', nation: 'qun', type: 'order', cost: 4, effect: 'pin_all', text: '压制所有敌军一回合(使其无法行动)', img: '蝉' },
-    { id: 'qun_4', name: '袁绍', nation: 'qun', type: 'unit', cost: 4, op: 1, atk: 3, def: 5, traits: [], text: '部署：增加1点令上限', onDeploy: 'ramp_1', img: '袁' }
+    // 士兵卡
+    { id: 'de_1', name: '国防军步兵', nation: 'germany', rarity: 'soldier', type: 'unit', cost: 1, op: 1, atk: 1, def: 2, traits: ['guard'], text: '守护', img: '💂' },
+    { id: 'de_2', name: '三号突击炮', nation: 'germany', rarity: 'soldier', type: 'unit', cost: 3, op: 1, atk: 3, def: 4, traits: ['heavy_armor'], text: '重甲1', img: '🚜' },
+    { id: 'de_3', name: '闪电战', nation: 'germany', rarity: 'soldier', type: 'order', cost: 2, effect: 'op_refresh', text: '使一个单位重置行动', img: '⚡' },
+    { id: 'de_4', name: '虎式坦克', nation: 'germany', rarity: 'soldier', type: 'unit', cost: 6, op: 2, atk: 6, def: 6, traits: ['heavy_armor'], text: '重甲1', img: '🐅' },
+    { id: 'de_5', name: '斯图卡轰炸', nation: 'germany', rarity: 'soldier', type: 'order', cost: 3, effect: 'dmg_3', text: '造成3点伤害', img: '💣' },
+    { id: 'de_6', name: '豹式坦克', nation: 'germany', rarity: 'soldier', type: 'unit', cost: 5, op: 1, atk: 5, def: 4, traits: ['blitz'], text: '闪击', img: '🐆' },
+    { id: 'de_7', name: '铁十字勋章', nation: 'germany', rarity: 'soldier', type: 'order', cost: 2, effect: 'buff_2_2', text: '使一个单位+2/+2', img: '🎖️' },
+    { id: 'de_8', name: '狼群战术', nation: 'germany', rarity: 'soldier', type: 'unit', cost: 2, op: 1, atk: 2, def: 2, traits: ['ambush'], text: '伏击', img: '🐺' },
+    { id: 'de_9', name: '恩尼格玛', nation: 'germany', rarity: 'soldier', type: 'order', cost: 3, effect: 'draw_2', text: '抽2张牌', img: '📠' },
+    { id: 'de_10', name: '战术撤退', nation: 'germany', rarity: 'soldier', type: 'order', cost: 1, effect: 'bounce_unit', text: '将一个单位移回手牌并完全修复', img: '↩️' },
+    { id: 'de_11', name: 'Bf 109', nation: 'germany', rarity: 'soldier', type: 'unit', cost: 3, op: 1, atk: 4, def: 2, traits: ['flight', 'blitz'], text: '飞行, 闪击', img: '🦅' },
+
+    // --- 群雄/中立 (Warlords/Neutral) ---
+    // 英雄卡
+    { id: 'neu_hero_1', name: '雇佣兵团长', nation: 'neutral', rarity: 'hero', type: 'unit', cost: 5, op: 1, atk: 4, def: 5, traits: [], text: '部署：造成2点伤害', onDeploy: 'dmg_2_any', img: '🤠' },
+    
+    // 士兵卡
+    { id: 'neu_1', name: '意大利志愿军', nation: 'neutral', rarity: 'soldier', type: 'unit', cost: 1, op: 1, atk: 1, def: 4, traits: [], text: '坚韧', img: '🍝' },
+    { id: 'neu_2', name: '抵抗组织', nation: 'neutral', rarity: 'soldier', type: 'unit', cost: 2, op: 1, atk: 3, def: 1, traits: ['ambush'], text: '伏击', img: '✊' },
+    { id: 'neu_3', name: '补给车队', nation: 'neutral', rarity: 'soldier', type: 'unit', cost: 3, op: 1, atk: 1, def: 5, traits: [], text: '回合开始：恢复HQ 2血', onStartTurn: 'heal_hq_2', img: '🚚' },
+    { id: 'neu_4', name: '焦土政策', nation: 'neutral', rarity: 'soldier', type: 'order', cost: 4, effect: 'kill_all_damaged', text: '消灭所有受损单位', img: '🔥' }
 ];
 
 // === 2. 游戏状态 ===
@@ -555,11 +658,11 @@ const state = {
     
     player: {
         id: 'player', hp: 20, kredits: 1, maxKredits: 1,
-        deck: [], hand: [], support: [], faction: 'shu'
+        deck: [], hand: [], support: [], faction: 'japan'
     },
     opponent: {
         id: 'opponent', hp: 20, kredits: 1, maxKredits: 1,
-        deck: [], hand: [], support: [], faction: 'wei'
+        deck: [], hand: [], support: [], faction: 'germany'
     },
     frontline: {
         controller: null, // 'player' | 'opponent' | null
@@ -572,9 +675,8 @@ const state = {
 // === 3. 核心逻辑 ===
 
 function initGame() {
-    // 组牌：主势力20张 + 盟友(吴/群)10张
-    state.player.deck = buildDeck('shu', ['wu', 'qun']);
-    state.opponent.deck = buildDeck('wei', ['wu', 'qun']);
+    state.player.deck = buildDeck('japan', ['neutral']);
+    state.opponent.deck = buildDeck('germany', ['neutral']);
     
     shuffle(state.player.deck);
     shuffle(state.opponent.deck);
@@ -583,7 +685,7 @@ function initGame() {
     draw(state.opponent, 4);
     
     render();
-    showMsg("游戏开始");
+    showMsg("WAR BEGINS");
 }
 
 function buildDeck(main, allies) {
@@ -591,9 +693,17 @@ function buildDeck(main, allies) {
     const mainCards = CARDS.filter(c => c.nation === main);
     const allyCards = CARDS.filter(c => allies.includes(c.nation));
     
-    // 简单随机填充
-    for(let i=0; i<20; i++) deck.push(clone(rand(mainCards)));
-    for(let i=0; i<10; i++) deck.push(clone(rand(allyCards)));
+    // 1. 英雄卡 (限1, 随机)
+    const heroes = mainCards.filter(c => c.rarity === 'hero');
+    if(heroes.length > 0) deck.push(clone(rand(heroes)));
+    
+    // 2. 填充其他卡 (共30张)
+    const soldiers = [...mainCards.filter(c => c.rarity !== 'hero'), ...allyCards.filter(c => c.rarity !== 'hero')];
+    
+    while(deck.length < 30) {
+        deck.push(clone(rand(soldiers)));
+    }
+    
     return deck;
 }
 
@@ -614,9 +724,12 @@ function endTurn() {
     if(state.gameOver) return;
     state.selection = null;
     
-    // 切换回合
-    const isPlayerTurn = state.current === 'player';
-    state.current = isPlayerTurn ? 'opponent' : 'player';
+    // 处理回合结束效果
+    const endingPlayer = state.current === 'player' ? state.player : state.opponent;
+    handleEndTurnEffects(endingPlayer);
+    
+    // 切换
+    state.current = state.current === 'player' ? 'opponent' : 'player';
     const active = state.current === 'player' ? state.player : state.opponent;
     
     // 资源增长
@@ -626,14 +739,13 @@ function endTurn() {
     // 抽牌
     draw(active, 1);
     
-    // 重置单位状态
+    // 重置单位状态 & 回合开始效果
     [state.player.support, state.opponent.support, state.frontline.units].forEach(list => {
         list.forEach(u => {
             u.moves = 0; u.attacks = 0; u.deployedTurn = false;
         });
     });
-    
-    // 移除临时效果 (如压制) - 简化版暂略
+    handleStartTurnEffects(active);
     
     render();
     
@@ -642,24 +754,55 @@ function endTurn() {
     }
 }
 
+function handleEndTurnEffects(player) {
+    const allUnits = [...player.support];
+    if(state.frontline.controller === player.id) allUnits.push(...state.frontline.units);
+    
+    allUnits.forEach(u => {
+        if(u.onEndTurn === 'self_destruct') {
+            u.currentHp = 0;
+            showMsg(`${u.name} 自毁!`);
+        }
+        
+        // 移除临时Buff
+        if(u.tempBuffs) {
+            u.tempBuffs.forEach(b => {
+                if(b.atk) u.atk -= b.atk;
+            });
+            u.tempBuffs = [];
+        }
+    });
+    checkDeaths();
+}
+
+function handleStartTurnEffects(player) {
+    const allUnits = [...player.support];
+    if(state.frontline.controller === player.id) allUnits.push(...state.frontline.units);
+    
+    allUnits.forEach(u => {
+        if(u.onStartTurn === 'heal_hq_2') {
+            player.hp = Math.min(20, player.hp + 2);
+            showMsg("补给到达");
+        }
+    });
+}
+
 // === 交互逻辑 ===
 
 function handleCardClick(card, inHand, ownerId) {
     if(state.gameOver || state.current !== 'player') return;
-    if(ownerId !== 'player') return; // 不能点对面的牌
+    if(ownerId !== 'player') return;
 
     if(inHand) {
-        // 点击手牌：选中或取消
         if(state.selection?.item === card) {
             state.selection = null;
         } else {
             state.selection = { type: 'hand', item: card };
         }
     } else {
-        // 点击场上单位：可能是选中去攻击/移动
         const unit = card;
         if(state.selection?.item === unit) {
-            state.selection = null; // 取消选中
+            state.selection = null;
         } else {
             state.selection = { type: 'unit', item: unit };
         }
@@ -668,21 +811,18 @@ function handleCardClick(card, inHand, ownerId) {
 }
 
 function handleTargetClick(targetType, targetId) {
-    // 处理攻击目标或部署位置
     if(!state.selection || state.current !== 'player') return;
     
     const sel = state.selection;
     
     if(sel.type === 'hand') {
-        // 部署单位或使用指令
         const card = sel.item;
         if(card.cost > state.player.kredits) {
-            showMsg("令不足！");
+            showMsg("KREDITS 不足！");
             return;
         }
         
         if(card.type === 'unit') {
-            // 部署到后排
             if(targetType === 'zone' && targetId === 'player-support') {
                 if(state.player.support.length >= 4) {
                     showMsg("后排已满");
@@ -691,129 +831,139 @@ function handleTargetClick(targetType, targetId) {
                 playUnit(state.player, card);
             }
         } else if(card.type === 'order') {
-            // 指令目标
             playOrder(state.player, card, targetType, targetId);
         }
     } else if(sel.type === 'unit') {
-        // 单位行动
         const unit = sel.item;
-        
-        // 移动到前线
         if(targetType === 'zone' && targetId === 'frontline') {
             tryMoveFront(state.player, unit);
-        } 
-        // 攻击敌方
-        else if(targetType === 'unit' || targetType === 'hq') {
+        } else if(targetType === 'unit' || targetType === 'hq') {
             tryAttack(state.player, unit, targetType, targetId);
         }
     }
 }
 
-// 部署单位
 function playUnit(player, card) {
     player.kredits -= card.cost;
-    // 移除手牌
     player.hand = player.hand.filter(c => c !== card);
     
     const unit = { ...card, currentHp: card.def, moves: 0, attacks: 0, deployedTurn: true };
     player.support.push(unit);
     
-    // 部署特效
     if(unit.onDeploy) resolveDeployEffect(player, unit);
     
     state.selection = null;
     render();
 }
 
-// 部署特效
 function resolveDeployEffect(player, unit) {
-    if(unit.onDeploy === 'dmg_2_random') {
+    const isPlayer = player.id === 'player';
+    const enemy = isPlayer ? state.opponent : state.player;
+    
+    if(unit.onDeploy === 'draw_1') {
+        draw(player, 1);
+    } else if(unit.onDeploy === 'dmg_2_any') {
+        // 简单化：打随机敌人或HQ
+        enemy.hp -= 2;
+        showMsg(`${unit.name} 造成2点伤害`);
+    } else if(unit.onDeploy === 'buff_all_1_atk') {
+        [...player.support, ...state.frontline.units].forEach(u => {
+            if(getUnitOwner(u) === player.id) u.atk += 1;
+        });
+        showMsg("山本五十六: 全军突击!");
+    } else if(unit.onDeploy === 'buff_front_2') {
         if(state.frontline.controller === player.id) {
-            // 简单处理：打脸
-            state.opponent.hp -= 2;
-            showMsg("关羽造成2点伤害！");
+            state.frontline.units.forEach(u => u.atk += 2);
+            showMsg("前线强化!");
         }
-    } else if(unit.onDeploy === 'aoe_1') {
-        // 周瑜
-        const enemies = [...state.opponent.support];
-        if(state.frontline.controller !== player.id) enemies.push(...state.frontline.units);
-        enemies.forEach(e => e.currentHp -= 1);
-        state.opponent.hp -= 1;
-        checkDeaths();
-    } else if(unit.onDeploy === 'ramp_1') {
-        player.maxKredits = Math.min(12, player.maxKredits + 1);
-        player.kredits++;
+    } else if(unit.onDeploy === 'kill_damaged') {
+        const enemySupport = player.id === 'player' ? state.opponent.support : state.player.support;
+        const enemyFront = state.frontline.controller !== player.id ? state.frontline.units : [];
+        const targets = [...enemySupport, ...enemyFront].filter(u => u.currentHp < u.def);
+        
+        if(targets.length > 0) {
+            const target = targets[Math.floor(Math.random()*targets.length)]; // rand() not in scope? It is global.
+            target.currentHp = 0;
+            showMsg(`${unit.name} 斩杀 ${target.name}!`);
+        } else {
+            showMsg("无受损敌军");
+        }
+    } else if(unit.onDeploy === 'buff_armor_1') {
+        const mySupport = player.id === 'player' ? state.player.support : state.opponent.support;
+        const myFront = state.frontline.controller === player.id ? state.frontline.units : [];
+        // Buff a random ally unit that doesn't have heavy armor? Or just any?
+        // Text says "Give an armored unit Heavy Armor". Wait, "Armored unit" is not a type.
+        // Let's assume it buffs a random ally unit with Heavy Armor +1?
+        // The card text says: "使一个装甲单位获得重甲".
+        // Let's simplify: Give a random ally unit Heavy Armor.
+        const targets = [...mySupport, ...myFront].filter(u => u !== unit);
+        if(targets.length > 0) {
+            const target = targets[Math.floor(Math.random()*targets.length)];
+            if(!target.traits.includes('heavy_armor')) target.traits.push('heavy_armor');
+            showMsg(`${target.name} 获得重甲!`);
+        }
     }
 }
 
-// 使用指令
 function playOrder(player, card, targetType, targetObj) {
-    // 简化：目前指令多为自动目标或打脸
-    // 如果需要指定目标，这里要判断 valid target
-    
     let executed = false;
-    
-    if(card.effect === 'draw_2') {
-        draw(player, 2);
+    const isPlayer = player.id === 'player';
+    const enemy = isPlayer ? state.opponent : state.player;
+
+    if(card.effect === 'dmg_3') {
+        if(targetType === 'hq' && targetObj === (isPlayer?'opponent':'player')) {
+            enemy.hp -= 3; executed = true;
+        } else if(targetType === 'unit' && getUnitOwner(targetObj) !== player.id) {
+            targetObj.currentHp -= 3; executed = true;
+        }
+    } else if(card.effect === 'dmg_2_hq') {
+        enemy.hp -= 2; executed = true;
+    } else if(card.effect === 'buff_2_2') {
+        if(targetType === 'unit' && getUnitOwner(targetObj) === player.id) {
+            targetObj.atk += 2; targetObj.currentHp += 2; targetObj.def += 2; executed = true;
+        }
+    } else if(card.effect === 'draw_2') {
+        draw(player, 2); executed = true;
+    } else if(card.effect === 'ramp_1') {
+        player.maxKredits = Math.min(12, player.maxKredits+1); player.kredits++; executed = true;
+    } else if(card.effect === 'kill_unit_dmg_hq') {
+        if(targetType === 'unit' && getUnitOwner(targetObj) === player.id) {
+            targetObj.currentHp = 0;
+            enemy.hp -= 5;
+            executed = true;
+        } else {
+             if(isPlayer) showMsg("选择己方单位献祭");
+        }
+    } else if(card.effect === 'buff_all_2_0_temp') {
+        [...player.support, ...state.frontline.units].forEach(u => {
+            if(getUnitOwner(u) === player.id) {
+                u.atk += 2;
+                if(!u.tempBuffs) u.tempBuffs = [];
+                u.tempBuffs.push({atk: 2});
+            }
+        });
         executed = true;
-    } else if(card.effect === 'dmg_3') {
-        // 急袭：简单处理打脸或随便打一个
-        // 实际逻辑应该允许玩家点选。这里为了单文件简洁，假设点哪里打哪里
-        if(targetType === 'hq' && targetObj === 'opponent') {
-            state.opponent.hp -= 3;
-            executed = true;
-        } else if(targetType === 'unit' && getUnitOwner(targetObj) === 'opponent') {
-            targetObj.currentHp -= 3;
-            checkDeaths();
-            executed = true;
-        }
-    } else if(card.effect === 'dmg_2_draw_1') {
-         if(targetType === 'hq' && targetObj === 'opponent') {
-            state.opponent.hp -= 2;
-            draw(player, 1);
-            executed = true;
-        } else if(targetType === 'unit') {
-            targetObj.currentHp -= 2;
-            draw(player, 1);
-            checkDeaths();
-            executed = true;
-        }
     }
-    
+
     if(executed) {
         player.kredits -= card.cost;
         player.hand = player.hand.filter(c => c !== card);
         state.selection = null;
         render();
+        checkDeaths();
         checkWin();
     } else {
-        if(card.effect.startsWith('dmg')) showMsg("请选择敌方目标");
-        else {
-             // 自动执行类
-             if(card.effect === 'pin_all') {
-                 // 简单实现
-                 showMsg("敌军被压制！");
-                 player.kredits -= card.cost;
-                 player.hand = player.hand.filter(c => c !== card);
-                 state.selection = null;
-                 render();
-             }
-        }
+        if(isPlayer) showMsg("无效目标");
     }
 }
 
-// 移动逻辑
 function tryMoveFront(player, unit) {
-    if(unit.op > player.kredits) { showMsg("令不足"); return; }
+    if(unit.op > player.kredits) { showMsg("KREDITS 不足"); return; }
     if(unit.moves > 0 || (unit.deployedTurn && !unit.traits.includes('blitz'))) { showMsg("无法移动"); return; }
     
-    // 已经在前线？
     if(state.frontline.units.includes(unit)) { showMsg("已在前线"); return; }
-    
-    // 前线被敌占？
     if(state.frontline.controller && state.frontline.controller !== player.id) { showMsg("前线被敌军占据"); return; }
     
-    // 移动
     player.kredits -= unit.op;
     player.support = player.support.filter(u => u !== unit);
     state.frontline.units.push(unit);
@@ -823,65 +973,57 @@ function tryMoveFront(player, unit) {
     render();
 }
 
-// 攻击逻辑
 function tryAttack(player, unit, targetType, target) {
-    if(unit.op > player.kredits) { showMsg("令不足"); return; }
+    if(unit.op > player.kredits) { showMsg("KREDITS 不足"); return; }
     if(unit.attacks > 0) { showMsg("已攻击过"); return; }
-    if(unit.deployedTurn && !unit.traits.includes('blitz')) { showMsg("部署回合不能攻击"); return; }
+    if(unit.deployedTurn && !unit.traits.includes('blitz')) { showMsg("准备中"); return; }
     
-    // 前线规则：如果敌方占前线，必须先打前线单位 (除非我是轰炸机-未实现)
-    const enemyFront = state.frontline.controller === 'opponent' && state.frontline.units.length > 0;
+    const enemyFront = state.frontline.controller === (player.id==='player'?'opponent':'player') && state.frontline.units.length > 0;
     const amIFront = state.frontline.units.includes(unit);
     
     if(enemyFront && !amIFront) {
-        // 我在后排，敌在前排 -> 只能打前线
+        // 必须先打前线，除非飞行单位
         if(targetType === 'hq' || !state.frontline.units.includes(target)) {
-            showMsg("必须先清除前线");
-            return;
+            if(!unit.traits.includes('flight')) {
+                showMsg("前线受阻");
+                return;
+            }
         }
     }
     
-    // 守护规则
-    // 检查目标区域是否有守护单位
-    let zoneUnits = [];
+    // 守护
     if(targetType === 'unit') {
         const owner = getUnitOwner(target);
-        if(state.frontline.units.includes(target)) zoneUnits = state.frontline.units;
-        else zoneUnits = (owner === 'player' ? state.player.support : state.opponent.support);
-        
+        let zoneUnits = (state.frontline.units.includes(target)) ? state.frontline.units : (owner === 'player' ? state.player.support : state.opponent.support);
         const guards = zoneUnits.filter(u => u.traits.includes('guard') && u !== target);
         if(guards.length > 0 && !target.traits.includes('guard')) {
-            showMsg("必须攻击守护单位");
+            showMsg("被守护单位阻挡");
             return;
         }
     } else if(targetType === 'hq') {
-        // 打HQ前要看该区域是否有守护? KARDS里守护通常保护HQ
-        // 假设敌方前线有守护，或者后排有守护且前线空，都得先打守护
-        // 简化：如果敌方前线有人，就不能打HQ(由前线规则覆盖)。如果前线没人，后排有守护，必须打守护。
-        const enemySupportGuards = state.opponent.support.filter(u => u.traits.includes('guard'));
-        if(enemySupportGuards.length > 0 && !enemyFront) {
-            showMsg("敌方后排有守护单位");
-            return;
+        // 如果没有前线阻挡，检查后排守护
+        if(!enemyFront) {
+            const enemySupportGuards = (player.id==='player' ? state.opponent.support : state.player.support).filter(u => u.traits.includes('guard'));
+            if(enemySupportGuards.length > 0) {
+                showMsg("敌方后排有守护单位");
+                return;
+            }
         }
     }
 
-    // 执行攻击
     player.kredits -= unit.op;
     unit.attacks = 1;
     
     if(targetType === 'hq') {
-        state.opponent.hp -= unit.atk;
-        showMsg(`造成 ${unit.atk} 伤害!`);
+        const enemy = player.id === 'player' ? state.opponent : state.player;
+        enemy.hp -= unit.atk;
+        showMsg(`💥 -${unit.atk}`);
     } else {
-        // 单位对战
         let dmgToTarget = unit.atk;
         let dmgToSelf = target.atk;
         
-        // 重甲
         if(target.traits.includes('heavy_armor')) dmgToTarget = Math.max(0, dmgToTarget - 1);
         if(unit.traits.includes('heavy_armor')) dmgToSelf = Math.max(0, dmgToSelf - 1);
-        
-        // 伏击：攻击时不反击? KARDS里伏击是攻击时对方不反击(如果是主动攻击)
         if(unit.traits.includes('ambush')) dmgToSelf = 0;
         
         target.currentHp -= dmgToTarget;
@@ -902,81 +1044,58 @@ function getUnitOwner(unit) {
 }
 
 function checkDeaths() {
-    [state.player.support, state.opponent.support, state.frontline.units].forEach((list, idx) => {
-        // 倒序遍历删除
+    [state.player.support, state.opponent.support, state.frontline.units].forEach((list) => {
         for(let i=list.length-1; i>=0; i--) {
-            if(list[i].currentHp <= 0) {
-                list.splice(i, 1);
-            }
+            if(list[i].currentHp <= 0) list.splice(i, 1);
         }
     });
-    
     if(state.frontline.units.length === 0) state.frontline.controller = null;
 }
 
 function checkWin() {
-    if(state.opponent.hp <= 0) {
-        state.gameOver = true;
-        showMsg("胜利！", 5000);
-    } else if(state.player.hp <= 0) {
-        state.gameOver = true;
-        showMsg("失败...", 5000);
-    }
+    if(state.opponent.hp <= 0) { state.gameOver = true; showMsg("VICTORY!", 5000); }
+    else if(state.player.hp <= 0) { state.gameOver = true; showMsg("DEFEAT...", 5000); }
 }
 
-// === AI 逻辑 (简化) ===
+// === AI ===
 function aiTurn() {
     if(state.gameOver) return;
-    
     const ai = state.opponent;
     const player = state.player;
     
-    // 1. 部署：优先高费
+    // 1. 部署
     const playables = ai.hand.filter(c => c.type === 'unit' && c.cost <= ai.kredits);
     playables.sort((a,b) => b.cost - a.cost);
     
     if(playables.length > 0 && ai.support.length < 4) {
-        const card = playables[0];
-        ai.kredits -= card.cost;
-        ai.hand = ai.hand.filter(c => c !== card);
-        const unit = { ...card, currentHp: card.def, moves: 0, attacks: 0, deployedTurn: true };
-        ai.support.push(unit);
-        render(); // AI每一步渲染一次有点快，实际应该delay
+        playUnit(ai, playables[0]);
     }
     
-    // 2. 移动：抢前线
+    // 2. 移动抢前线
     if(!state.frontline.controller || state.frontline.controller === 'opponent') {
         const movers = ai.support.filter(u => u.op <= ai.kredits && u.moves === 0 && (!u.deployedTurn || u.traits.includes('blitz')));
-        if(movers.length > 0) {
-            const m = movers[0];
-            ai.kredits -= m.op;
-            ai.support = ai.support.filter(u => u !== m);
-            state.frontline.units.push(m);
-            state.frontline.controller = 'opponent';
-            m.moves = 1;
-            render();
-        }
+        if(movers.length > 0) tryMoveFront(ai, movers[0]);
     }
     
     // 3. 攻击
-    // 收集所有可攻击单位
     let attackers = [...ai.support];
     if(state.frontline.controller === 'opponent') attackers.push(...state.frontline.units);
     
     attackers.forEach(u => {
         if(u.op <= ai.kredits && u.attacks === 0 && (!u.deployedTurn || u.traits.includes('blitz'))) {
-            // 简单策略：能打脸打脸，被阻挡则打前线
-            const playerFront = state.frontline.controller === 'player' && state.frontline.units.length > 0;
-            const amIFront = state.frontline.units.includes(u);
-            
-            if(playerFront && !amIFront) {
-                // 必须打前线
-                const target = state.frontline.units[0];
-                aiAttack(u, target);
-            } else {
-                // 打脸
-                aiAttack(u, null); // null = HQ
-            }
+            // 简单AI：能打脸打脸
+             const playerFront = state.frontline.controller === 'player' && state.frontline.units.length > 0;
+             const amIFront = state.frontline.units.includes(u);
+             
+             if(playerFront && !amIFront) {
+                 if(u.traits.includes('flight')) {
+                     tryAttack(ai, u, 'hq', player);
+                 } else {
+                     tryAttack(ai, u, 'unit', state.frontline.units[0]);
+                 }
+             } else {
+                 tryAttack(ai, u, 'hq', player);
+             }
         }
     });
     
@@ -987,24 +1106,8 @@ function aiTurn() {
     setTimeout(endTurn, 1000);
 }
 
-function aiAttack(unit, target) {
-    if(state.opponent.kredits < unit.op) return;
-    state.opponent.kredits -= unit.op;
-    unit.attacks = 1;
-    
-    if(!target) {
-        state.player.hp -= unit.atk;
-        showMsg("敌方攻击HQ!");
-    } else {
-        target.currentHp -= unit.atk;
-        // AI不反击？简化处理，实际应该反击
-        if(!unit.traits.includes('ambush')) unit.currentHp -= target.atk;
-    }
-}
-
 // === 渲染 ===
 function render() {
-    // HQ
     document.getElementById('player-hp').textContent = state.player.hp;
     document.getElementById('player-kredits').textContent = state.player.kredits;
     document.getElementById('player-kredits-max').textContent = state.player.maxKredits;
@@ -1013,21 +1116,15 @@ function render() {
     document.getElementById('opp-hp').textContent = state.opponent.hp;
     document.getElementById('opp-kredits').textContent = state.opponent.kredits;
     document.getElementById('opp-kredits-max').textContent = state.opponent.maxKredits;
+    document.getElementById('opp-deck-count').textContent = state.opponent.deck.length;
 
-    // Hands
-    renderHand(state.player.hand, 'player-hand', true);
-    renderHand(state.opponent.hand, 'opponent-hand', false);
+    renderHand(state.player.hand, 'player-hand-area', true);
+    renderHand(state.opponent.hand, 'opponent-hand-area', false);
     
-    // Battlefield
     renderZone(state.player.support, 'player-support');
     renderZone(state.opponent.support, 'opp-support');
+    renderZone(state.frontline.units, 'frontline');
     
-    // Frontline
-    const flContainer = document.getElementById('frontline-units');
-    flContainer.innerHTML = '';
-    state.frontline.units.forEach(u => flContainer.appendChild(createUnitEl(u)));
-    
-    // Button
     document.getElementById('end-turn-btn').disabled = state.current !== 'player';
 }
 
@@ -1036,22 +1133,26 @@ function renderHand(hand, containerId, isPlayer) {
     el.innerHTML = '';
     hand.forEach(card => {
         const cardEl = document.createElement('div');
-        cardEl.className = `card ${card.nation}`;
+        cardEl.className = `card ${card.nation} rarity-${card.rarity}`;
         if(isPlayer && state.selection?.item === card) cardEl.classList.add('selected');
         
         if(isPlayer) {
             cardEl.innerHTML = `
                 <div class="card-cost">${card.cost}</div>
                 <div class="card-img">${card.img}</div>
-                <div class="card-title">${card.name}</div>
-                <div class="card-desc">${card.text || ''}</div>
+                <div class="card-header">${card.name}</div>
+                <div class="card-body">
+                    <div class="card-type-tag">${card.rarity === 'hero' ? '⭐ HERO' : 'SOLDIER'}</div>
+                    ${card.text || ''}
+                </div>
                 ${card.type === 'unit' ? `<div class="card-stats"><span class="stat-atk">${card.atk}</span><span class="stat-def">${card.def}</span></div>` : ''}
             `;
             cardEl.onclick = (e) => { e.stopPropagation(); handleCardClick(card, true, 'player'); };
         } else {
-            // 敌方手牌
-            cardEl.style.background = '#4a3b2a';
-            cardEl.style.width = '40px'; // 紧凑
+            cardEl.style.background = '#3e2723';
+            cardEl.style.width = '60px';
+            cardEl.style.borderColor = '#1a1a1a';
+            cardEl.innerHTML = `<div style="width:100%;height:100%;background:repeating-linear-gradient(45deg,#3e2723,#3e2723 10px,#4e342e 10px,#4e342e 20px)"></div>`;
         }
         el.appendChild(cardEl);
     });
@@ -1059,66 +1160,62 @@ function renderHand(hand, containerId, isPlayer) {
 
 function renderZone(units, containerId) {
     const el = document.getElementById(containerId);
+    // 保留label
+    const label = el.querySelector('.row-label');
     el.innerHTML = '';
+    if(label) el.appendChild(label);
+    
     units.forEach(u => el.appendChild(createUnitEl(u)));
     
-    // 点击空地：部署逻辑
     if(state.selection?.type === 'hand' && state.selection.item.type === 'unit') {
-        // 如果是玩家后排且空闲
         if(containerId === 'player-support' && units.length < 4) {
             el.onclick = () => handleTargetClick('zone', 'player-support');
-            el.style.backgroundColor = 'rgba(255,255,255,0.1)';
+            el.style.backgroundColor = 'rgba(255,255,255,0.05)';
         }
     } else {
         el.onclick = null;
         el.style.backgroundColor = '';
     }
     
-    // 前线特殊点击
-    if(containerId === 'frontline-area' || containerId === 'frontline-units') {
-         // 处理移动到前线
+    if(containerId === 'frontline') {
+         el.onclick = () => handleTargetClick('zone', 'frontline');
     }
 }
 
-// 前线点击监听要绑在父级
-document.getElementById('frontline-area').onclick = () => handleTargetClick('zone', 'frontline');
-// 敌方HQ点击
-document.querySelector('.opponent-area .stats-panel').onclick = () => handleTargetClick('hq', 'opponent');
-
 function createUnitEl(unit) {
     const el = document.createElement('div');
-    el.className = `card unit-card ${unit.nation}`;
+    el.className = `card unit-card ${unit.nation} rarity-${unit.rarity}`;
     if(unit.currentHp < unit.def) el.style.borderColor = 'red';
     if(unit.attacks > 0 || unit.moves > 0) el.classList.add('exhausted');
     if(state.selection?.item === unit) el.classList.add('selected');
     
-    // 状态标
     let traitsHtml = '';
-    if(unit.traits.includes('blitz')) traitsHtml += '<span class="trait-icon t-blitz">闪</span>';
-    if(unit.traits.includes('guard')) traitsHtml += '<span class="trait-icon t-guard">守</span>';
-    if(unit.traits.includes('heavy_armor')) traitsHtml += '<span class="trait-icon t-heavy">甲</span>';
-    if(unit.traits.includes('ambush')) traitsHtml += '<span class="trait-icon t-ambush">伏</span>';
+    if(unit.traits.includes('blitz')) traitsHtml += '<span class="trait-icon t-blitz">B</span>';
+    if(unit.traits.includes('guard')) traitsHtml += '<span class="trait-icon t-guard">G</span>';
+    if(unit.traits.includes('heavy_armor')) traitsHtml += '<span class="trait-icon t-heavy">A</span>';
+    if(unit.traits.includes('ambush')) traitsHtml += '<span class="trait-icon t-ambush">H</span>';
+    if(unit.traits.includes('flight')) traitsHtml += '<span class="trait-icon t-flight">F</span>';
     
     el.innerHTML = `
-        <div class="card-cost" style="width:18px;height:18px;font-size:12px">${unit.op}</div>
-        <div class="card-img" style="height:40%">${unit.img}</div>
-        <div class="card-title">${unit.name}</div>
+        <div class="card-cost" style="width:20px;height:20px;font-size:12px">${unit.op}</div>
+        <div class="card-img" style="height:45%">${unit.img}</div>
+        <div class="card-header" style="font-size:10px">${unit.name}</div>
         <div class="traits-row">${traitsHtml}</div>
         <div class="card-stats">
             <span class="stat-atk">${unit.atk}</span>
             <span class="stat-def">${unit.currentHp}</span>
         </div>
     `;
-    el.onclick = (e) => { e.stopPropagation(); handleCardClick(unit, false, getUnitOwner(unit) === 'player' ? 'player' : 'opponent'); if(getUnitOwner(unit) !== 'player') handleTargetClick('unit', unit); };
+    el.onclick = (e) => { 
+        e.stopPropagation(); 
+        const owner = getUnitOwner(unit);
+        if(owner === 'player') {
+             handleCardClick(unit, false, 'player');
+        } else {
+             handleTargetClick('unit', unit);
+        }
+    };
     return el;
-}
-
-// === 辅助 ===
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
 }
 
 function showMsg(txt, dur=1500) {
